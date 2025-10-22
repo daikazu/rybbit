@@ -84,7 +84,14 @@ export async function deleteSiteImport(request: FastifyRequest<DeleteImportReque
     }
 
     // Delete the import record from the database
-    await ImportStatusManager.deleteImport(importId);
+    try {
+      await ImportStatusManager.deleteImport(importId);
+    } catch (dbError) {
+      console.error(`Failed to delete import record ${importId}:`, dbError);
+      return reply.status(500).send({
+        error: "Import events deleted but failed to remove import record",
+      });
+    }
 
     return reply.send({
       data: {
