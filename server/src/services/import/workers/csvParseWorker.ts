@@ -88,7 +88,7 @@ export async function registerCsvParseWorker() {
   await jobQueue.work<CsvParseJob>(CSV_PARSE_QUEUE, { batchSize: 1, pollingIntervalSeconds: 10 }, async ([job]) => {
     const { site, importId, source, storageLocation, isR2Storage, organization, startDate, endDate } = job.data;
 
-    let stream: any = null;
+    let stream: ReturnType<typeof parse> | null = null;
     let processingTimeout: NodeJS.Timeout | null = null;
 
     try {
