@@ -50,7 +50,7 @@ const importFormSchema = z.object({
         const file = files[0];
         return file && file.size <= MAX_FILE_SIZE;
       },
-      IS_CLOUD ? `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB` : "File size exceeds maximum allowed"
+      IS_CLOUD ? `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024} MB` : "File size exceeds maximum allowed"
     )
     .refine(files => {
       const file = files[0];
@@ -241,7 +241,10 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
             <Upload className="h-5 w-5" />
             Import Data
           </CardTitle>
-          <CardDescription>Import data from other analytics platforms. Supports CSV files up to 100MB.</CardDescription>
+          <CardDescription>
+            Import data from other analytics platforms.{" "}
+            {IS_CLOUD && `Supports CSV files up to ${MAX_FILE_SIZE / 1024 / 1024} MB.`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Active Import Warning */}
