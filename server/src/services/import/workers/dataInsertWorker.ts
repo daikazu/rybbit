@@ -23,6 +23,7 @@ export async function createDataInsertWorker(jobQueue: IJobQueue) {
     if (allChunksSent) {
       try {
         await updateImportStatus(importId, "completed");
+        logger.info({ importId }, "Import completed successfully");
         return;
       } catch (error) {
         logger.error({ importId, error }, "Failed to mark as completed");
@@ -47,6 +48,8 @@ export async function createDataInsertWorker(jobQueue: IJobQueue) {
         values: transformedRecords,
         format: "JSONEachRow",
       });
+
+      logger.debug({ importId, recordCount: transformedRecords.length }, "Inserted chunk to ClickHouse");
 
       // Update progress (non-critical - log if fails but don't crash)
       try {

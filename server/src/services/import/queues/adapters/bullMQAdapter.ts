@@ -114,7 +114,7 @@ export class BullMQAdapter implements IJobQueue {
         this.queueEvents.set(queueName, queueEvents);
 
         queueEvents.on("completed", ({ jobId }) => {
-          logger.info({ jobId, queueName }, "Job completed");
+          logger.debug({ jobId, queueName }, "Job completed");
         });
 
         queueEvents.on("failed", ({ jobId, failedReason }) => {

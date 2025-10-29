@@ -93,6 +93,7 @@ export async function createCsvParseWorker(jobQueue: IJobQueue) {
 
       let chunk: UmamiEvent[] = [];
       let totalSkippedQuota = 0;
+      let totalProcessed = 0;
 
       stream = isR2Storage
         ? await createR2FileStream(storageLocation, platform)
@@ -105,6 +106,7 @@ export async function createCsvParseWorker(jobQueue: IJobQueue) {
       });
 
       await updateImportStatus(importId, "processing");
+      logger.info({ importId, platform, organization }, "Started processing CSV import");
 
       // Set timeout to prevent indefinite processing
       processingTimeout = setTimeout(() => {
@@ -134,6 +136,7 @@ export async function createCsvParseWorker(jobQueue: IJobQueue) {
 
         // Event passed all filters - add to chunk
         chunk.push(data);
+        totalProcessed++;
 
         if (chunk.length >= chunkSize) {
           await jobQueue.send<DataInsertJob>(DATA_INSERT_QUEUE, {
@@ -174,6 +177,7 @@ export async function createCsvParseWorker(jobQueue: IJobQueue) {
       }
 
       // Send finalization signal with total chunk count
+      logger.info({ importId, totalProcessed, totalSkippedQuota }, "CSV parsing completed successfully");
       await jobQueue.send<DataInsertJob>(DATA_INSERT_QUEUE, {
         site,
         importId,

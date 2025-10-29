@@ -37,10 +37,10 @@ export const deleteImportFile = async (storageLocation: string, isR2Storage: boo
   try {
     if (isR2Storage) {
       await r2Storage.deleteImportFile(storageLocation);
-      logger.info({ storageLocation }, "Deleted R2 file");
+      logger.debug({ storageLocation }, "Deleted R2 file");
     } else {
       await unlink(storageLocation);
-      logger.info({ storageLocation }, "Deleted local file");
+      logger.debug({ storageLocation }, "Deleted local file");
     }
     return { success: true };
   } catch (error) {
