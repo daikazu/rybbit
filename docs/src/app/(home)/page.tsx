@@ -84,13 +84,13 @@ const features = [
     icon: TrendingUp,
     title: "Ditch Google Analytics",
     description:
-      "At Rybbit, we strongly believe that analytics tools should be insightful, not invasive. This is why we created a privacy-focused, simple software tool that offers valuable insights without the complexity.",
+      "Google Analytics is bloated, confusing, and designed to sell ads. At Rybbit, our only product is web analytics, and our only goal is to help you understand your users (instead of tracking them across the web).",
   },
   {
     icon: Zap,
-    title: "Get setup in minutes",
+    title: "Setup in minutes",
     description:
-      "Our script is a single line of code that works with any website, CMS or framework. Set up in minutes and start collecting real-time data without prior technical knowledge. Our analytics software is designed to be easily understood instantly.",
+      "Add one line of code to your site and you're done using one of our 30+ framework guides.  Start seeing real-time data within seconds of installation.",
   },
   {
     icon: MousePointer,
@@ -102,19 +102,19 @@ const features = [
     icon: Target,
     title: "See more accurate data",
     description:
-      "Our real-time analytics blocks bots, scrapers and spam traffic—showing you only real, human visits. This gives you the flexibility to collect data for (and only pay for) exactly the data you want to see and make decisions about.",
+      "Built-in bot detection filters out fake traffic automatically. No more inflated numbers from scrapers and crawlers. See only real human visitors and make decisions based on actual user behavior.",
   },
   {
     icon: Cookie,
-    title: "Say no to cookie banners",
+    title: "No more cookie banners",
     description:
-      "Rybbit anonymizes IP addresses and other visitor data without using cookies. That means you don't have to clutter your site or slow it down with cookie consent banners and notices for your site's analytics.",
+      "We don't use cookies. Period. That means no annoying consent banners cluttering your site, no user friction, and full compliance with GDPR, CCPA, and other privacy regulations by default.",
   },
   {
     icon: Code,
     title: "Open source forever",
     description:
-      "Thousands of companies, including Fortune 100s, pioneers of the Open Web, and governments, have switched from Google Analytics to Rybbit for ease of use, better privacy, and more accurate metrics.",
+      "We're bootstrapped, independent, and 100% open source. Every line of code is on GitHub for you to inspect, modify, or self-host. We're building Rybbit for the community, not for venture capitalists.",
   },
 ];
 
@@ -288,8 +288,8 @@ export default function HomePage() {
               const Icon = feature.icon;
               return (
                 <div key={feature.title} className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 shadow-md shadow-emerald-500/10 flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-emerald-400" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 shadow-md shadow-emerald-500/10 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-emerald-400" />
                   </div>
                   <h3 className="text-2xl font-medium tracking-tight">{feature.title}</h3>
                   <p className="text-neutral-300 text-base">{feature.description}</p>
