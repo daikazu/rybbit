@@ -1,6 +1,13 @@
 // Types for client-side CSV import system
 // Client parses CSV, server transforms and validates
 
+// Allowed date range for imports based on subscription tier
+export interface AllowedDateRange {
+  earliestAllowedDate: string; // yyyy-MM-dd format
+  latestAllowedDate: string; // yyyy-MM-dd format
+  historicalWindowMonths: number; // 6, 24, or 60
+}
+
 export interface UmamiEvent {
   session_id: string;
   hostname: string;
@@ -32,8 +39,10 @@ export type WorkerMessageToWorker =
       siteId: number;
       importId: string;
       platform: "umami";
-      startDate?: string;
-      endDate?: string;
+      earliestAllowedDate: string; // Filter events before this date (yyyy-MM-dd)
+      latestAllowedDate: string; // Filter events after this date (yyyy-MM-dd)
+      startDate?: string; // Optional user-specified start date filter
+      endDate?: string; // Optional user-specified end date filter
     }
   | {
       type: "CANCEL";

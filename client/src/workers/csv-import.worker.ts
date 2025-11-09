@@ -17,9 +17,13 @@ let totalErrors = 0;
 let errorDetails: Array<{ row: number; message: string }> = [];
 let lastProgressUpdate = 0;
 
-// Date range filter (client-side optimization to reduce server load)
-let startDate: DateTime | null = null;
-let endDate: DateTime | null = null;
+// Date range filters (client-side optimization to reduce server load)
+// Quota-enforced dates (required based on subscription tier)
+let earliestAllowedDate: DateTime | null = null;
+let latestAllowedDate: DateTime | null = null;
+// User-specified optional date filters
+let userStartDate: DateTime | null = null;
+let userEndDate: DateTime | null = null;
 
 // Umami CSV header mapping
 const umamiHeaders = [
@@ -61,16 +65,38 @@ const umamiHeaders = [
   undefined,
 ];
 
-function createDateRangeFilter(startDateStr?: string, endDateStr?: string) {
-  startDate = startDateStr ? DateTime.fromFormat(startDateStr, "yyyy-MM-dd", { zone: "utc" }).startOf("day") : null;
-  endDate = endDateStr ? DateTime.fromFormat(endDateStr, "yyyy-MM-dd", { zone: "utc" }).endOf("day") : null;
+function createDateRangeFilter(
+  earliestAllowedDateStr: string,
+  latestAllowedDateStr: string,
+  userStartDateStr?: string,
+  userEndDateStr?: string
+) {
+  // Parse quota-enforced dates (required)
+  earliestAllowedDate = DateTime.fromFormat(earliestAllowedDateStr, "yyyy-MM-dd", { zone: "utc" }).startOf("day");
+  latestAllowedDate = DateTime.fromFormat(latestAllowedDateStr, "yyyy-MM-dd", { zone: "utc" }).endOf("day");
 
-  if (startDate && !startDate.isValid) {
-    throw new Error(`Invalid start date: ${startDateStr}`);
+  if (!earliestAllowedDate.isValid) {
+    throw new Error(`Invalid earliest allowed date: ${earliestAllowedDateStr}`);
   }
 
-  if (endDate && !endDate.isValid) {
-    throw new Error(`Invalid end date: ${endDateStr}`);
+  if (!latestAllowedDate.isValid) {
+    throw new Error(`Invalid latest allowed date: ${latestAllowedDateStr}`);
+  }
+
+  // Parse user-specified optional dates
+  userStartDate = userStartDateStr
+    ? DateTime.fromFormat(userStartDateStr, "yyyy-MM-dd", { zone: "utc" }).startOf("day")
+    : null;
+  userEndDate = userEndDateStr
+    ? DateTime.fromFormat(userEndDateStr, "yyyy-MM-dd", { zone: "utc" }).endOf("day")
+    : null;
+
+  if (userStartDate && !userStartDate.isValid) {
+    throw new Error(`Invalid user start date: ${userStartDateStr}`);
+  }
+
+  if (userEndDate && !userEndDate.isValid) {
+    throw new Error(`Invalid user end date: ${userEndDateStr}`);
   }
 }
 
@@ -80,11 +106,21 @@ function isDateInRange(dateStr: string): boolean {
     return false;
   }
 
-  if (startDate && createdAt < startDate) {
+  // Check quota-enforced dates (required)
+  if (earliestAllowedDate && createdAt < earliestAllowedDate) {
     return false;
   }
 
-  if (endDate && createdAt > endDate) {
+  if (latestAllowedDate && createdAt > latestAllowedDate) {
+    return false;
+  }
+
+  // Check user-specified optional dates
+  if (userStartDate && createdAt < userStartDate) {
+    return false;
+  }
+
+  if (userEndDate && createdAt > userEndDate) {
     return false;
   }
 
@@ -123,12 +159,11 @@ function handleParsedRow(row: unknown, rowIndex: number) {
     return;
   }
 
-  // Apply optional date range filter (client-side optimization)
-  if (startDate || endDate) {
-    if (!isDateInRange(umamiEvent.created_at)) {
-      totalSkipped++;
-      return;
-    }
+  // Apply date range filter (quota-enforced + optional user filters)
+  // This client-side filtering reduces network traffic and server processing
+  if (!isDateInRange(umamiEvent.created_at)) {
+    totalSkipped++;
+    return;
   }
 
   // Add to batch (no transformation, send raw row to server)
@@ -218,8 +253,13 @@ self.onmessage = (event: MessageEvent<WorkerMessageToWorker>) => {
       errorDetails = [];
       lastProgressUpdate = 0;
 
-      // Set up date range filter (optional client-side optimization)
-      createDateRangeFilter(message.startDate, message.endDate);
+      // Set up date range filters (quota-enforced + optional user filters)
+      createDateRangeFilter(
+        message.earliestAllowedDate,
+        message.latestAllowedDate,
+        message.startDate,
+        message.endDate
+      );
 
       // Start parsing
       parseCSV(message.file);

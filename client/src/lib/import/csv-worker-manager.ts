@@ -44,6 +44,8 @@ export class CSVWorkerManager {
     siteId: number,
     importId: string,
     platform: "umami",
+    earliestAllowedDate: string,
+    latestAllowedDate: string,
     startDate?: string,
     endDate?: string
   ): void {
@@ -89,13 +91,15 @@ export class CSVWorkerManager {
       }
     };
 
-    // Start parsing (no quota info - server handles that)
+    // Start parsing with allowed date range for client-side filtering
     const message: WorkerMessageToWorker = {
       type: "PARSE_START",
       file,
       siteId,
       importId,
       platform,
+      earliestAllowedDate,
+      latestAllowedDate,
       startDate,
       endDate,
     };

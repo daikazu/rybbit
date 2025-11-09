@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,10 +25,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Upload, FileText, AlertCircle, CheckCircle2, Clock, Loader2, Database, Trash2, Info } from "lucide-react";
-import { useGetSiteImports, useImportSiteData, useDeleteSiteImport } from "@/api/admin/import";
+import { useGetSiteImports, useCreateSiteImport, useDeleteSiteImport } from "@/api/admin/import";
 import { SplitDateRangePicker } from "@/components/SplitDateRangePicker";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { IS_CLOUD } from "@/lib/const";
+import { CSVWorkerManager } from "@/lib/import/csv-worker-manager";
+import type { ImportProgress } from "@/lib/import/types";
 
 interface ImportManagerProps {
   siteId: number;
@@ -108,11 +110,15 @@ function formatFileSize(bytes: number): string {
 
 export function ImportManager({ siteId, disabled }: ImportManagerProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingImportData, setPendingImportData] = useState<ImportFormData | null>(null);
   const [deleteImportId, setDeleteImportId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  const [showProgressDialog, setShowProgressDialog] = useState(false);
+  const workerManagerRef = useRef<CSVWorkerManager | null>(null);
 
   const { data, isLoading, error } = useGetSiteImports(siteId);
-  const mutation = useImportSiteData(siteId);
+  const createImportMutation = useCreateSiteImport(siteId);
   const deleteMutation = useDeleteSiteImport(siteId);
 
   const {
@@ -135,11 +141,19 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
   const fileList = watch("file");
   const selectedFile = fileList?.[0];
 
+  // Cleanup worker on component unmount
+  useEffect(() => {
+    return () => {
+      workerManagerRef.current?.terminate();
+    };
+  }, []);
+
   const onSubmit = (data: ImportFormData) => {
     const file = data.file[0];
     if (!file) return;
 
     if (file.size > CONFIRM_THRESHOLD) {
+      setPendingImportData(data);
       setShowConfirmDialog(true);
     } else {
       executeImport(data);
@@ -153,16 +167,47 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
     const startDate = data.dateRange.startDate?.toFormat("yyyy-MM-dd");
     const endDate = data.dateRange.endDate?.toFormat("yyyy-MM-dd");
 
-    mutation.mutate(
+    // Step 1: Create import record and get allowed date range
+    createImportMutation.mutate(
       {
-        file,
         platform: data.platform,
-        startDate,
-        endDate,
+        fileName: file.name,
       },
       {
-        onSuccess: () => {
+        onSuccess: response => {
+          const { importId, allowedDateRange } = response.data;
+
+          // Step 2: Initialize worker manager
+          workerManagerRef.current = new CSVWorkerManager(
+            progress => {
+              setImportProgress(progress);
+            },
+            (success, message) => {
+              console.log(success ? "✅" : "❌", message);
+              // Import list will auto-refresh due to polling in useGetSiteImports
+            }
+          );
+
+          // Step 3: Show progress dialog
+          setShowProgressDialog(true);
+
+          // Step 4: Start CSV parsing and upload with allowed date range
+          workerManagerRef.current.startImport(
+            file,
+            siteId,
+            importId,
+            data.platform,
+            allowedDateRange.earliestAllowedDate,
+            allowedDateRange.latestAllowedDate,
+            startDate,
+            endDate
+          );
+
+          // Reset form
           reset();
+        },
+        onError: error => {
+          console.error("Failed to create import:", error);
         },
       }
     );
@@ -237,13 +282,11 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
     });
   }, [data?.data]);
 
-  const formData = watch();
-
   // Check if there's an active import (cloud only)
   const hasActiveImport =
     IS_CLOUD && sortedImports.some(imp => imp.status === "pending" || imp.status === "processing");
 
-  const isImportDisabled = !isValid || mutation.isPending || disabled || hasActiveImport;
+  const isImportDisabled = !isValid || createImportMutation.isPending || disabled || hasActiveImport;
 
   return (
     <div className="space-y-6">
@@ -283,7 +326,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={disabled || mutation.isPending || hasActiveImport}
+                    disabled={disabled || createImportMutation.isPending || hasActiveImport}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select platform" />
@@ -311,7 +354,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
                     value={field.value}
                     onChange={field.onChange}
                     label="Date Range (Optional)"
-                    disabled={disabled || mutation.isPending || hasActiveImport}
+                    disabled={disabled || createImportMutation.isPending || hasActiveImport}
                     showDescription={true}
                     clearButtonText="Clear dates"
                     className="space-y-2"
@@ -334,7 +377,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
                 accept=".csv"
                 multiple={false}
                 {...register("file")}
-                disabled={disabled || mutation.isPending || hasActiveImport}
+                disabled={disabled || createImportMutation.isPending || hasActiveImport}
               />
               {selectedFile && (
                 <p className="text-sm text-muted-foreground">
@@ -346,7 +389,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
 
             {/* Import Button */}
             <Button type="submit" disabled={isImportDisabled} className="w-full sm:w-auto">
-              {mutation.isPending ? (
+              {createImportMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Importing...
@@ -361,19 +404,19 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
           </form>
 
           {/* Import Error */}
-          {mutation.isError && (
+          {createImportMutation.isError && (
             <Alert variant="destructive">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {mutation.error.message || "Failed to import file. Please try again."}
+                  {createImportMutation.error.message || "Failed to import file. Please try again."}
                 </AlertDescription>
               </div>
             </Alert>
           )}
 
           {/* Success Message */}
-          {mutation.isSuccess && (
+          {createImportMutation.isSuccess && (
             <Alert className="border-green-200 bg-green-50">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -528,7 +571,9 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => executeImport(formData)}>Yes, Import File</AlertDialogAction>
+            <AlertDialogAction onClick={() => pendingImportData && executeImport(pendingImportData)}>
+              Yes, Import File
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -548,6 +593,88 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
               Delete Import
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Import Progress Dialog */}
+      <AlertDialog open={showProgressDialog} onOpenChange={setShowProgressDialog}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Import Progress</AlertDialogTitle>
+            <AlertDialogDescription>
+              {importProgress?.status === "parsing" && "Parsing CSV file..."}
+              {importProgress?.status === "uploading" && "Uploading batches to server..."}
+              {importProgress?.status === "completed" && "Import completed!"}
+              {importProgress?.status === "failed" && "Import failed"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4">
+            {/* Progress Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Parsed Rows</p>
+                <p className="text-2xl font-bold">{importProgress?.parsedRows.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Skipped Rows</p>
+                <p className="text-2xl font-bold">{importProgress?.skippedRows.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Uploaded Batches</p>
+                <p className="text-2xl font-bold">
+                  {importProgress?.uploadedBatches} / {importProgress?.totalBatches}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Imported Events</p>
+                <p className="text-2xl font-bold">{importProgress?.importedEvents.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {importProgress && importProgress.totalBatches > 0 && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all"
+                  style={{
+                    width: `${(importProgress.uploadedBatches / importProgress.totalBatches) * 100}%`,
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Errors */}
+            {importProgress && importProgress.errors.length > 0 && (
+              <div className="max-h-40 overflow-y-auto">
+                <p className="text-sm font-medium text-red-600 mb-2">Errors ({importProgress.errors.length}):</p>
+                {importProgress.errors.slice(0, 10).map((error, idx) => (
+                  <p key={idx} className="text-xs text-red-600">
+                    {error.batch !== undefined ? `Batch ${error.batch}: ` : ""}
+                    {error.message}
+                  </p>
+                ))}
+                {importProgress.errors.length > 10 && (
+                  <p className="text-xs text-muted-foreground">...and {importProgress.errors.length - 10} more</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            {importProgress?.status === "completed" || importProgress?.status === "failed" ? (
+              <AlertDialogAction onClick={() => setShowProgressDialog(false)}>Close</AlertDialogAction>
+            ) : (
+              <AlertDialogCancel
+                onClick={() => {
+                  workerManagerRef.current?.terminate();
+                  setShowProgressDialog(false);
+                }}
+              >
+                Cancel Import
+              </AlertDialogCancel>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
