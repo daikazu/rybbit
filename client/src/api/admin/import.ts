@@ -5,17 +5,11 @@ import type { AllowedDateRange } from "@/lib/import/types";
 
 interface GetSiteImportsResponse {
   importId: string;
-  platform: "umami";
+  platform: "umami" | null;
   status: "pending" | "processing" | "completed" | "failed";
   importedEvents: number;
   errorMessage: string | null;
   startedAt: string;
-  fileName: string;
-}
-
-interface CreateSiteImportParams {
-  platform: "umami";
-  fileName: string;
 }
 
 interface CreateSiteImportResponse {
@@ -46,13 +40,12 @@ export function useCreateSiteImport(site: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: CreateSiteImportParams) => {
+    mutationFn: async () => {
       return await authedFetch<APIResponse<CreateSiteImportResponse>>(
         `/create-site-import/${site}`,
         undefined,
         {
           method: "POST",
-          data: params,
         }
       );
     },

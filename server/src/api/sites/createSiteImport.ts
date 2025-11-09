@@ -13,23 +13,17 @@ const createSiteImportRequestSchema = z
     params: z.object({
       site: z.string().min(1),
     }),
-    body: z.object({
-      platform: z.enum(["umami"]),
-      fileName: z.string().min(1),
-    }),
   })
   .strict();
 
 type CreateSiteImportRequest = {
   Params: z.infer<typeof createSiteImportRequestSchema.shape.params>;
-  Body: z.infer<typeof createSiteImportRequestSchema.shape.body>;
 };
 
 export async function createSiteImport(request: FastifyRequest<CreateSiteImportRequest>, reply: FastifyReply) {
   try {
     const parsed = createSiteImportRequestSchema.safeParse({
       params: request.params,
-      body: request.body,
     });
 
     if (!parsed.success) {
@@ -37,7 +31,6 @@ export async function createSiteImport(request: FastifyRequest<CreateSiteImportR
     }
 
     const { site } = parsed.data.params;
-    const { platform, fileName } = parsed.data.body;
     const siteId = Number(site);
 
     // Check user authorization
@@ -57,12 +50,11 @@ export async function createSiteImport(request: FastifyRequest<CreateSiteImportR
       return reply.status(404).send({ error: "Site not found" });
     }
 
-    // Create import record with concurrency check
+    // Create import record with concurrency check (platform will be auto-detected on first batch)
     const importResult = await ImportLimiter.createImportWithConcurrencyCheck({
       siteId,
       organizationId: siteRecord.organizationId,
-      platform,
-      fileName,
+      platform: null,
       status: "pending",
       importedEvents: 0,
       errorMessage: null,

@@ -24,7 +24,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Upload, FileText, AlertCircle, CheckCircle2, Clock, Loader2, Database, Trash2, Info } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle2, Clock, Loader2, Trash2, Info } from "lucide-react";
 import { useGetSiteImports, useCreateSiteImport, useDeleteSiteImport } from "@/api/admin/import";
 import { SplitDateRangePicker } from "@/components/SplitDateRangePicker";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,10 +41,8 @@ const MAX_FILE_SIZE = IS_CLOUD ? 500 * 1024 * 1024 : 50 * 1024 * 1024 * 1024; //
 const CONFIRM_THRESHOLD = IS_CLOUD ? 100 * 1024 * 1024 : 1024 * 1024 * 1024; // Show confirmation for files > 100 MB (cloud) or > 1 GB (self-hosted)
 const ALLOWED_FILE_TYPES = ["text/csv"];
 const ALLOWED_EXTENSIONS = [".csv"];
-const PLATFORMS = [{ value: "umami", label: "Umami" }] as const;
 
 const importFormSchema = z.object({
-  platform: z.enum(["umami"], { required_error: "Please select a platform" }),
   file: z
     .custom<FileList>()
     .refine(files => files.length === 1, "Please select a file")
@@ -132,7 +130,6 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
     resolver: zodResolver(importFormSchema),
     mode: "onChange",
     defaultValues: {
-      platform: "" as "umami",
       file: Object.assign(new DataTransfer().files, {}),
       dateRange: {},
     },
@@ -168,49 +165,42 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
     const endDate = data.dateRange.endDate?.toFormat("yyyy-MM-dd");
 
     // Step 1: Create import record and get allowed date range
-    createImportMutation.mutate(
-      {
-        platform: data.platform,
-        fileName: file.name,
+    createImportMutation.mutate(undefined, {
+      onSuccess: response => {
+        const { importId, allowedDateRange } = response.data;
+
+        // Step 2: Initialize worker manager
+        workerManagerRef.current = new CSVWorkerManager(
+          progress => {
+            setImportProgress(progress);
+          },
+          (success, message) => {
+            console.log(success ? "✅" : "❌", message);
+            // Import list will auto-refresh due to polling in useGetSiteImports
+          }
+        );
+
+        // Step 3: Show progress dialog
+        setShowProgressDialog(true);
+
+        // Step 4: Start CSV parsing and upload with allowed date range
+        workerManagerRef.current.startImport(
+          file,
+          siteId,
+          importId,
+          allowedDateRange.earliestAllowedDate,
+          allowedDateRange.latestAllowedDate,
+          startDate,
+          endDate
+        );
+
+        // Reset form
+        reset();
       },
-      {
-        onSuccess: response => {
-          const { importId, allowedDateRange } = response.data;
-
-          // Step 2: Initialize worker manager
-          workerManagerRef.current = new CSVWorkerManager(
-            progress => {
-              setImportProgress(progress);
-            },
-            (success, message) => {
-              console.log(success ? "✅" : "❌", message);
-              // Import list will auto-refresh due to polling in useGetSiteImports
-            }
-          );
-
-          // Step 3: Show progress dialog
-          setShowProgressDialog(true);
-
-          // Step 4: Start CSV parsing and upload with allowed date range
-          workerManagerRef.current.startImport(
-            file,
-            siteId,
-            importId,
-            data.platform,
-            allowedDateRange.earliestAllowedDate,
-            allowedDateRange.latestAllowedDate,
-            startDate,
-            endDate
-          );
-
-          // Reset form
-          reset();
-        },
-        onError: error => {
-          console.error("Failed to create import:", error);
-        },
-      }
-    );
+      onError: error => {
+        console.error("Failed to create import:", error);
+      },
+    });
 
     setShowConfirmDialog(false);
   };
@@ -313,37 +303,6 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Platform Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="platform" className="flex items-center gap-2">
-                <Database className="h-4 w-4" />
-                Platform
-              </Label>
-              <Controller
-                name="platform"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={disabled || createImportMutation.isPending || hasActiveImport}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select platform" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PLATFORMS.map(platform => (
-                        <SelectItem key={platform.value} value={platform.value}>
-                          {platform.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.platform && <p className="text-sm text-red-600">{errors.platform.message}</p>}
-            </div>
-
             {/* Date Range Picker */}
             <Controller
               name="dateRange"
@@ -477,7 +436,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>File</TableHead>
+                    <TableHead>Started At</TableHead>
                     <TableHead>Platform</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Events</TableHead>
@@ -488,17 +447,14 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
                   {sortedImports.map(imp => {
                     const statusInfo = getStatusInfo(imp.status);
                     const StatusIcon = statusInfo.icon;
+                    const startedAt = DateTime.fromISO(imp.startedAt).toFormat("MMM dd, yyyy HH:mm");
 
                     return (
                       <TableRow key={imp.importId}>
-                        <TableCell className="font-medium">
-                          <div className="max-w-[200px] truncate" title={imp.fileName}>
-                            {imp.fileName}
-                          </div>
-                        </TableCell>
+                        <TableCell className="font-medium">{startedAt}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="capitalize">
-                            {imp.platform}
+                            {imp.platform || "N/A"}
                           </Badge>
                         </TableCell>
                         <TableCell>

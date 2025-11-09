@@ -6,11 +6,35 @@ import { updateImportProgress, updateImportStatus, getImportById } from "../../s
 import { UmamiImportMapper, type UmamiEvent } from "../../services/import/mappings/umami.js";
 import { ImportQuotaTracker } from "../../services/import/importQuotaChecker.js";
 import { db } from "../../db/postgres/postgres.js";
-import { sites } from "../../db/postgres/schema.js";
+import { sites, importStatus } from "../../db/postgres/schema.js";
 import { eq } from "drizzle-orm";
 import { createServiceLogger } from "../../lib/logger/logger.js";
 
 const logger = createServiceLogger("import:batch");
+
+// Zod schema for Umami event (from CSV)
+const umamiEventSchema = z.object({
+  session_id: z.string(),
+  hostname: z.string(),
+  browser: z.string(),
+  os: z.string(),
+  device: z.string(),
+  screen: z.string(),
+  language: z.string(),
+  country: z.string(),
+  region: z.string(),
+  city: z.string(),
+  url_path: z.string(),
+  url_query: z.string(),
+  referrer_path: z.string(),
+  referrer_query: z.string(),
+  referrer_domain: z.string(),
+  page_title: z.string(),
+  event_type: z.string(),
+  event_name: z.string(),
+  distinct_id: z.string(),
+  created_at: z.string(),
+});
 
 const batchImportRequestSchema = z
   .object({
@@ -18,7 +42,7 @@ const batchImportRequestSchema = z
       site: z.string().min(1),
     }),
     body: z.object({
-      events: z.array(z.any()).min(1).max(10000), // Limit batch size to 10k events, raw Umami rows
+      events: z.array(umamiEventSchema).min(1).max(10000), // Properly typed Umami events
       importId: z.string().uuid(),
       batchIndex: z.number().int().min(0),
       totalBatches: z.number().int().min(1),
@@ -79,6 +103,22 @@ export async function batchImportEvents(request: FastifyRequest<BatchImportReque
       await updateImportStatus(importId, "processing");
     }
 
+    // Auto-detect platform if not set (first batch)
+    let detectedPlatform = importRecord.platform;
+    if (!detectedPlatform) {
+      // Detect platform based on event structure
+      // For now, we only support Umami, so if events match Umami schema, it's Umami
+      detectedPlatform = "umami";
+
+      // Update import record with detected platform
+      await db
+        .update(importStatus)
+        .set({ platform: detectedPlatform })
+        .where(eq(importStatus.importId, importId));
+
+      logger.info({ importId, detectedPlatform }, "Auto-detected platform");
+    }
+
     // Get organization ID for quota checking
     const [siteRecord] = await db
       .select({ organizationId: sites.organizationId })
@@ -99,7 +139,7 @@ export async function batchImportEvents(request: FastifyRequest<BatchImportReque
       const eventsWithinQuota: UmamiEvent[] = [];
       let skippedDueToQuota = 0;
 
-      for (const event of events as UmamiEvent[]) {
+      for (const event of events) {
         if (!event.created_at) {
           continue; // Skip events without timestamp
         }

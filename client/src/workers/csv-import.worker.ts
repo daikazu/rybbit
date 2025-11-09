@@ -151,7 +151,32 @@ function sendProgress() {
 }
 
 function handleParsedRow(row: unknown, rowIndex: number) {
-  const umamiEvent = row as UmamiEvent;
+  const rawEvent = row as Record<string, unknown>;
+
+  // Filter out undefined columns (those mapped to undefined in umamiHeaders)
+  // This reduces payload size by removing unused CSV columns
+  const umamiEvent: UmamiEvent = {
+    session_id: String(rawEvent.session_id || ""),
+    hostname: String(rawEvent.hostname || ""),
+    browser: String(rawEvent.browser || ""),
+    os: String(rawEvent.os || ""),
+    device: String(rawEvent.device || ""),
+    screen: String(rawEvent.screen || ""),
+    language: String(rawEvent.language || ""),
+    country: String(rawEvent.country || ""),
+    region: String(rawEvent.region || ""),
+    city: String(rawEvent.city || ""),
+    url_path: String(rawEvent.url_path || ""),
+    url_query: String(rawEvent.url_query || ""),
+    referrer_path: String(rawEvent.referrer_path || ""),
+    referrer_query: String(rawEvent.referrer_query || ""),
+    referrer_domain: String(rawEvent.referrer_domain || ""),
+    page_title: String(rawEvent.page_title || ""),
+    event_type: String(rawEvent.event_type || ""),
+    event_name: String(rawEvent.event_name || ""),
+    distinct_id: String(rawEvent.distinct_id || ""),
+    created_at: String(rawEvent.created_at || ""),
+  };
 
   // Skip rows with missing created_at (required field)
   if (!umamiEvent.created_at) {
@@ -166,7 +191,7 @@ function handleParsedRow(row: unknown, rowIndex: number) {
     return;
   }
 
-  // Add to batch (no transformation, send raw row to server)
+  // Add to batch (filtered event with only required fields)
   currentBatch.push(umamiEvent);
   totalParsed++;
 

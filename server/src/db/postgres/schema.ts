@@ -632,13 +632,12 @@ export const importStatus = pgTable(
     importId: uuid("import_id").primaryKey().notNull().defaultRandom(),
     siteId: integer("site_id").notNull(),
     organizationId: text("organization_id").notNull(),
-    platform: importPlatformEnum("platform").notNull(),
+    platform: importPlatformEnum("platform"),
     status: importStatusEnum("status").notNull().default("pending"),
     importedEvents: integer("imported_events").notNull().default(0),
     errorMessage: text("error_message"),
     startedAt: timestamp("started_at", { mode: "string" }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { mode: "string" }),
-    fileName: text("file_name").notNull(),
   },
   table => [
     foreignKey({

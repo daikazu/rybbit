@@ -38,7 +38,6 @@ export type WorkerMessageToWorker =
       file: File;
       siteId: number;
       importId: string;
-      platform: "umami";
       earliestAllowedDate: string; // Filter events before this date (yyyy-MM-dd)
       latestAllowedDate: string; // Filter events after this date (yyyy-MM-dd)
       startDate?: string; // Optional user-specified start date filter
