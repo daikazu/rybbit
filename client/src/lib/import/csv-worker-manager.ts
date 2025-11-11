@@ -2,8 +2,6 @@ import Papa from "papaparse";
 import { DateTime } from "luxon";
 import type { UmamiEvent } from "./types";
 
-type CompleteCallback = (success: boolean, message: string) => void;
-
 const BATCH_SIZE = 5000;
 
 const umamiHeaders = [
@@ -47,7 +45,6 @@ const umamiHeaders = [
 
 export class CSVWorkerManager {
   private aborted = false;
-  private onComplete: CompleteCallback | null = null;
   private uploadInProgress = false;
   private parsingComplete = false;
   private quotaExceeded = false;
@@ -58,10 +55,6 @@ export class CSVWorkerManager {
   private earliestAllowedDate: DateTime | null = null;
   private latestAllowedDate: DateTime | null = null;
 
-  constructor(onComplete?: CompleteCallback) {
-    this.onComplete = onComplete || null;
-  }
-
   startImport(
     file: File,
     siteId: number,
@@ -71,13 +64,7 @@ export class CSVWorkerManager {
   ): void {
     this.siteId = siteId;
     this.importId = importId;
-    this.parsingComplete = false;
-    this.uploadInProgress = false;
-    this.currentBatch = [];
-    this.aborted = false;
-    this.quotaExceeded = false;
 
-    // Set up date range filter
     this.earliestAllowedDate = DateTime.fromFormat(earliestAllowedDate, "yyyy-MM-dd", { zone: "utc" }).startOf("day");
     this.latestAllowedDate = DateTime.fromFormat(latestAllowedDate, "yyyy-MM-dd", { zone: "utc" }).endOf("day");
 
@@ -91,15 +78,10 @@ export class CSVWorkerManager {
       return;
     }
 
-    // Start parsing with PapaParse worker
     Papa.parse<UmamiEvent>(file, {
       worker: true,
       header: true,
       skipEmptyLines: "greedy",
-      delimiter: "",
-      transformHeader: (header, index) => {
-        return umamiHeaders[index] || header;
-      },
       step: results => {
         if (this.aborted || this.quotaExceeded) return;
 
@@ -204,9 +186,8 @@ export class CSVWorkerManager {
   }
 
   private handleError(message: string): void {
-    if (this.onComplete) {
-      this.onComplete(false, message);
-    }
+    console.error("CSV Import Error:", message);
+    this.terminate();
   }
 
   private async uploadBatch(events: UmamiEvent[], isLastBatch: boolean): Promise<void> {
@@ -246,16 +227,12 @@ export class CSVWorkerManager {
       if (data.quotaExceeded) {
         this.quotaExceeded = true;
         this.aborted = true; // Stop parsing
-        if (this.onComplete) {
-          this.onComplete(true, data.message || "Import completed with quota limits");
-        }
+        console.log("Import completed with quota limits:", data.message);
         return;
       }
     } catch (error) {
       // Critical failure - network error, server error, etc.
-      if (this.onComplete) {
-        this.onComplete(false, `Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
-      }
+      console.error("Upload failed:", error instanceof Error ? error.message : "Unknown error");
       this.terminate();
       return;
     } finally {
@@ -268,9 +245,7 @@ export class CSVWorkerManager {
 
   private checkCompletion(): void {
     if (this.parsingComplete && !this.uploadInProgress && !this.quotaExceeded) {
-      if (this.onComplete) {
-        this.onComplete(true, "Import completed successfully");
-      }
+      console.log("Import completed successfully");
     }
   }
 

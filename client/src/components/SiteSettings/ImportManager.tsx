@@ -1,9 +1,6 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { DateTime } from "luxon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,23 +34,18 @@ const CONFIRM_THRESHOLD = 100 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["text/csv"];
 const ALLOWED_EXTENSIONS = [".csv"];
 
-const importFormSchema = z.object({
-  file: z
-    .custom<FileList>()
-    .refine(files => files.length === 1, "Please select a file")
-    .refine(files => {
-      const file = files[0];
-      if (!file) return false;
-      const extension = "." + file.name.split(".").pop()?.toLowerCase();
-      return ALLOWED_EXTENSIONS.includes(extension) || ALLOWED_FILE_TYPES.includes(file.type);
-    }, "Only CSV files are accepted")
-    .refine(files => {
-      const file = files[0];
-      return file && file.name.length <= 255;
-    }, "Filename is too long"),
-});
+function validateFile(file: File | null): string {
+  if (!file) {
+    return "Please select a file";
+  }
 
-type ImportFormData = z.infer<typeof importFormSchema>;
+  const extension = "." + file.name.split(".").pop()?.toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(extension) && !ALLOWED_FILE_TYPES.includes(file.type)) {
+    return "Only CSV files are accepted";
+  }
+
+  return "";
+}
 
 function formatFileSize(bytes: number): string {
   const sizeInMB = bytes / 1024 / 1024;
@@ -68,31 +60,17 @@ function formatFileSize(bytes: number): string {
 
 export function ImportManager({ siteId, disabled }: ImportManagerProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingImportData, setPendingImportData] = useState<ImportFormData | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [deleteImportId, setDeleteImportId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const workerManagerRef = useRef<CSVWorkerManager | null>(null);
 
   const { data, isLoading, error } = useGetSiteImports(siteId);
   const createImportMutation = useCreateSiteImport(siteId);
   const deleteMutation = useDeleteSiteImport(siteId);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    formState: { errors, isValid },
-  } = useForm<ImportFormData>({
-    resolver: zodResolver(importFormSchema),
-    mode: "onChange",
-    defaultValues: {
-      file: Object.assign(new DataTransfer().files, {}),
-    },
-  });
-
-  const fileList = watch("file");
-  const selectedFile = fileList?.[0];
 
   useEffect(() => {
     return () => {
@@ -100,20 +78,25 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
     };
   }, []);
 
-  const onSubmit = (data: ImportFormData) => {
-    const file = data.file[0];
-    if (!file) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
+    setFileError(validateFile(file));
+  };
 
-    if (file.size > CONFIRM_THRESHOLD) {
-      setPendingImportData(data);
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile || fileError) return;
+
+    if (selectedFile.size > CONFIRM_THRESHOLD) {
+      setPendingFile(selectedFile);
       setShowConfirmDialog(true);
     } else {
-      executeImport(data);
+      executeImport(selectedFile);
     }
   };
 
-  const executeImport = (data: ImportFormData) => {
-    const file = data.file[0];
+  const executeImport = (file: File) => {
     if (!file) return;
 
     createImportMutation.mutate(undefined, {
@@ -130,7 +113,11 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
           allowedDateRange.latestAllowedDate
         );
 
-        reset();
+        setSelectedFile(null);
+        setFileError("");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       },
       onError: error => {
         console.error("Failed to create import:", error);
@@ -211,7 +198,8 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
   const hasActiveImport =
     IS_CLOUD && sortedImports.some(imp => imp.status === "pending" || imp.status === "processing");
 
-  const isImportDisabled = !isValid || createImportMutation.isPending || disabled || hasActiveImport;
+  const isImportDisabled =
+    !selectedFile || !!fileError || createImportMutation.isPending || disabled || hasActiveImport;
 
   return (
     <div className="space-y-6">
@@ -235,7 +223,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             {/* File Upload */}
             <div className="space-y-2">
               <Label htmlFor="file" className="flex items-center gap-2">
@@ -243,10 +231,12 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
                 CSV File
               </Label>
               <Input
+                ref={fileInputRef}
+                id="file"
                 type="file"
                 accept=".csv"
                 multiple={false}
-                {...register("file")}
+                onChange={handleFileChange}
                 disabled={disabled || createImportMutation.isPending || hasActiveImport}
               />
               {selectedFile && (
@@ -254,7 +244,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
                   Selected: {selectedFile.name} ({formatFileSize(selectedFile.size)})
                 </p>
               )}
-              {errors.file && <p className="text-sm text-red-600">{errors.file.message as string}</p>}
+              {fileError && <p className="text-sm text-red-600">{fileError}</p>}
             </div>
 
             {/* Import Button */}
@@ -430,7 +420,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => pendingImportData && executeImport(pendingImportData)}>
+            <AlertDialogAction onClick={() => pendingFile && executeImport(pendingFile)}>
               Yes, Import File
             </AlertDialogAction>
           </AlertDialogFooter>
