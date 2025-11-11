@@ -45,6 +45,7 @@ import { getConfig } from "./api/getConfig.js";
 import { getSessionReplayEvents } from "./api/sessionReplay/getSessionReplayEvents.js";
 import { getSessionReplays } from "./api/sessionReplay/getSessionReplays.js";
 import { recordSessionReplay } from "./api/sessionReplay/recordSessionReplay.js";
+import { deleteSessionReplay } from "./api/sessionReplay/deleteSessionReplay.js";
 import { addSite } from "./api/sites/addSite.js";
 import { updateSiteConfig } from "./api/sites/updateSiteConfig.js";
 import { deleteSite } from "./api/sites/deleteSite.js";
@@ -346,6 +347,7 @@ server.get("/api/performance/by-dimension/:site", getPerformanceByDimension);
 server.post("/api/session-replay/record/:site", recordSessionReplay);
 server.get("/api/session-replay/list/:site", getSessionReplays);
 server.get("/api/session-replay/:sessionId/:site", getSessionReplayEvents);
+server.delete("/api/session-replay/:sessionId/:site", deleteSessionReplay);
 
 // Administrative
 server.get("/api/config", getConfig);
