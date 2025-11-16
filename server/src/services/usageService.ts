@@ -163,10 +163,14 @@ class UsageService {
           query: `
             SELECT COUNT(*) as count
             FROM events
-            WHERE site_id IN (${grandfatheredSites.join(",")}) AND type = 'pageview'
-            AND timestamp >= toDate('${periodStart}')
+            WHERE site_id IN {siteIds:Array(Int32)} AND type = 'pageview'
+            AND timestamp >= toDate({periodStart:String})
           `,
           format: "JSONEachRow",
+          query_params: {
+            siteIds: grandfatheredSites,
+            periodStart: periodStart,
+          },
         });
         const grandfatheredRows = await processResults<{ count: string }>(grandfatheredResult);
         totalCount += parseInt(grandfatheredRows[0].count, 10);
@@ -178,11 +182,15 @@ class UsageService {
           query: `
             SELECT COUNT(*) as count
             FROM events
-            WHERE site_id IN (${newSites.join(",")})
+            WHERE site_id IN {siteIds:Array(Int32)}
             AND type IN ('pageview', 'custom_event', 'performance')
-            AND timestamp >= toDate('${periodStart}')
+            AND timestamp >= toDate({periodStart:String})
           `,
           format: "JSONEachRow",
+          query_params: {
+            siteIds: newSites,
+            periodStart: periodStart,
+          },
         });
         const newSitesRows = await processResults<{ count: string }>(newSitesResult);
         totalCount += parseInt(newSitesRows[0].count, 10);
