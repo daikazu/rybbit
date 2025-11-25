@@ -8,6 +8,7 @@ import {
   Gauge,
   Link as LinkIcon,
   MousePointerClick,
+  Palette,
   PlayCircle,
   Search,
   Share2,
@@ -31,6 +32,7 @@ import { hashtagGeneratorPlatformList } from "./(social-media-tools)/components/
 import { characterCounterPlatformList } from "./(social-media-tools)/components/character-counter-platform-configs";
 import { bioGeneratorPlatformList } from "./(social-media-tools)/components/bio-generator-platform-configs";
 import { imageResizerPlatformList } from "./(social-media-tools)/components/image-resizer-platform-configs";
+import { logoGeneratorPlatformList } from "./(social-media-tools)/components/logo-generator-platform-configs";
 import {
   SiDiscord,
   SiX,
@@ -57,6 +59,7 @@ import {
   SiSnapchat,
   SiSteam,
   SiTumblr,
+  SiWhatsapp,
 } from "@icons-pack/react-simple-icons";
 
 export const metadata = {
@@ -243,6 +246,7 @@ const platformIconMap: Record<string, any> = {
   snapchat: SiSnapchat,
   steam: SiSteam,
   tumblr: SiTumblr,
+  whatsapp: SiWhatsapp,
 };
 
 const fontGeneratorTools = platformList.map(platform => ({
@@ -308,6 +312,13 @@ const imageResizerTools = imageResizerPlatformList.map(platform => ({
   description: `Resize and crop images for ${platform.name} profiles, covers, and posts.`,
 }));
 
+const logoGeneratorTools = logoGeneratorPlatformList.map(platform => ({
+  href: `/tools/${platform.id}-logo-generator`,
+  icon: platformIconMap[platform.id] || Palette,
+  title: platform.displayName,
+  description: `Generate AI-powered brand logos for ${platform.name}.`,
+}));
+
 const socialMediaTools = [
   ...fontGeneratorTools,
   ...commentGeneratorTools,
@@ -318,6 +329,7 @@ const socialMediaTools = [
   ...characterCounterTools,
   ...bioGeneratorTools,
   ...imageResizerTools,
+  ...logoGeneratorTools,
 ];
 
 function ToolCard({ tool }: { tool: { href: string; icon: any; title: string; description: string } }) {

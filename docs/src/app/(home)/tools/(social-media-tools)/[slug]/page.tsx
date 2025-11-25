@@ -8,6 +8,7 @@ import ImageResizer from "../components/ImageResizer";
 import { HashtagGenerator } from "../components/HashtagGenerator";
 import { CharacterCounter } from "../components/CharacterCounter";
 import { BioGenerator } from "../components/BioGenerator";
+import { LogoGenerator } from "../components/LogoGenerator";
 import { platformConfigs, platformList } from "../components/platform-configs";
 import { commentPlatformConfigs, commentPlatformList } from "../components/comment-platform-configs";
 import { pageNamePlatformConfigs, pageNamePlatformList } from "../components/page-name-platform-configs";
@@ -29,9 +30,13 @@ import {
 } from "../components/character-counter-platform-configs";
 import { bioGeneratorPlatformConfigs, bioGeneratorPlatformList } from "../components/bio-generator-platform-configs";
 import { imageResizerPlatformConfigs, imageResizerPlatformList } from "../components/image-resizer-platform-configs";
+import {
+  logoGeneratorPlatformConfigs,
+  logoGeneratorPlatformList,
+} from "../components/logo-generator-platform-configs";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Hash, Type, User } from "lucide-react";
+import { Hash, Palette, Type, User } from "lucide-react";
 
 interface PageProps {
   params: Promise<{
@@ -77,6 +82,10 @@ export async function generateStaticParams() {
     slug: `${platform.id}-photo-resizer`,
   }));
 
+  const logoGenerators = logoGeneratorPlatformList.map(platform => ({
+    slug: `${platform.id}-logo-generator`,
+  }));
+
   return [
     ...fontGenerators,
     ...commentGenerators,
@@ -87,6 +96,7 @@ export async function generateStaticParams() {
     ...characterCounters,
     ...bioGenerators,
     ...imageResizers,
+    ...logoGenerators,
   ];
 }
 
@@ -330,6 +340,36 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       },
       alternates: {
         canonical: `https://rybbit.com/tools/${platform.id}-comment-generator`,
+      },
+    };
+  }
+
+  // Check if it's a logo generator
+  if (slug.endsWith("-logo-generator")) {
+    const platformId = slug.replace("-logo-generator", "");
+    const platform = logoGeneratorPlatformConfigs[platformId];
+
+    if (!platform) {
+      return { title: "Logo Generator Not Found" };
+    }
+
+    return {
+      title: `${platform.displayName} | AI-Powered Brand Logo Creator`,
+      description: platform.description,
+      openGraph: {
+        title: platform.displayName,
+        description: platform.description,
+        type: "website",
+        url: `https://rybbit.com/tools/${platform.id}-logo-generator`,
+        siteName: "Rybbit Documentation",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: platform.displayName,
+        description: platform.description,
+      },
+      alternates: {
+        canonical: `https://rybbit.com/tools/${platform.id}-logo-generator`,
       },
     };
   }
@@ -1573,6 +1613,164 @@ export default async function PlatformToolPage({ params }: PageProps) {
         ctaTitle="Track engagement and comment activity with Rybbit"
         ctaDescription="Measure which content drives the most comments and engagement on your social media platforms."
         ctaEventLocation={`${platform.id}_comment_generator_cta`}
+        structuredData={structuredData}
+      />
+    );
+  }
+
+  // Check if it's a logo generator
+  if (slug.endsWith("-logo-generator")) {
+    const platformId = slug.replace("-logo-generator", "");
+    const platform = logoGeneratorPlatformConfigs[platformId];
+
+    if (!platform) {
+      notFound();
+    }
+
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: platform.displayName,
+      description: platform.description,
+      url: `https://rybbit.com/tools/${platform.id}-logo-generator`,
+      applicationCategory: "DesignApplication",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      author: {
+        "@type": "Organization",
+        name: "Rybbit",
+        url: "https://rybbit.com",
+      },
+    };
+
+    const educationalContent = (
+      <>
+        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-4">
+          About {platform.name} Logo Generation
+        </h2>
+        <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-6">{platform.educationalContent}</p>
+
+        <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-3">How to Use This Tool</h3>
+        <ol className="space-y-2 text-neutral-700 dark:text-neutral-300 mb-6">
+          <li>
+            <strong>Enter your brand name</strong> - The name that will inspire the logo design
+          </li>
+          <li>
+            <strong>Add your industry</strong> (optional) - Helps create relevant design elements
+          </li>
+          <li>
+            <strong>Choose a design style</strong> - Select from {platform.recommendedStyles.length} style options
+          </li>
+          <li>
+            <strong>Specify colors</strong> (optional) - Add preferred colors or let AI choose
+          </li>
+          <li>
+            <strong>Click "Generate Logo"</strong> to create your unique brand logo
+          </li>
+          <li>
+            <strong>Download</strong> your logo in PNG format for immediate use
+          </li>
+        </ol>
+
+        <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-3">Recommended Design Styles</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {platform.recommendedStyles.map(style => (
+            <div
+              key={style}
+              className="p-4 bg-neutral-50 dark:bg-neutral-900/20 rounded-lg border border-neutral-200 dark:border-neutral-800 flex items-center gap-2"
+            >
+              <Palette className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <div className="font-medium text-neutral-900 dark:text-white">{style}</div>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-3">
+          Logo Design Tips for {platform.name}
+        </h3>
+        <ul className="space-y-2 text-neutral-700 dark:text-neutral-300 mb-6">
+          <li>
+            <strong>Keep it simple:</strong> Simple logos are more memorable and work better at small sizes
+          </li>
+          <li>
+            <strong>Consider the format:</strong> {platform.name} displays logos in various sizes and shapes
+          </li>
+          <li>
+            <strong>Choose appropriate colors:</strong> Colors should reflect your brand personality
+          </li>
+          <li>
+            <strong>Test at different sizes:</strong> Ensure your logo looks good as a tiny profile icon
+          </li>
+          <li>
+            <strong>Iterate and refine:</strong> Generate multiple options and choose the best fit
+          </li>
+        </ul>
+
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-6">
+          <strong>Note:</strong> AI-generated logos are starting points. Consider working with a designer to refine your
+          final brand identity. Always ensure your logo is unique and doesn&apos;t infringe on existing trademarks.
+        </p>
+      </>
+    );
+
+    const faqs = [
+      {
+        question: `How does the ${platform.name} logo generator work?`,
+        answer: `This tool uses AI image generation to create unique brand logos based on your inputs. It considers your brand name, industry, preferred style, and colors to generate a professional logo optimized for ${platform.name}.`,
+      },
+      {
+        question: "What design styles are available?",
+        answer: `You can choose from 8 styles: Minimalist, Modern, Playful, Professional, Vintage, Abstract, Geometric, and Hand-drawn. For ${platform.name}, we recommend: ${platform.recommendedStyles.join(", ")}.`,
+      },
+      {
+        question: "Can I use these logos commercially?",
+        answer:
+          "Yes! The logos generated are yours to use for commercial purposes. However, we recommend having a designer review and refine your logo for professional use, and always conduct a trademark search before finalizing.",
+      },
+      {
+        question: "What file format is the logo?",
+        answer:
+          "Logos are generated in PNG format, which works well for most digital uses including social media profiles, websites, and presentations. For print or scalable needs, consider recreating the design in vector format.",
+      },
+      {
+        question: "How many logos can I generate?",
+        answer:
+          "You can generate logos at a rate of 3 per minute. Each generation creates a unique design, so feel free to experiment with different styles and inputs to find the perfect logo.",
+      },
+      {
+        question: "How can Rybbit help with my brand?",
+        answer: (
+          <>
+            Rybbit helps you track your brand&apos;s performance across social media platforms. Monitor how your brand is
+            discovered, track engagement, and understand your audience.{" "}
+            <a
+              href="https://app.rybbit.io/signup"
+              className="text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 underline"
+            >
+              Start tracking for free
+            </a>
+            .
+          </>
+        ),
+      },
+    ];
+
+    return (
+      <ToolPageLayout
+        toolSlug={`${platform.id}-logo-generator`}
+        title={platform.displayName}
+        description={platform.description}
+        badge="AI-Powered Tool"
+        toolComponent={<LogoGenerator platform={platform} />}
+        educationalContent={educationalContent}
+        faqs={faqs}
+        relatedToolsCategory="social-media"
+        ctaTitle={`Build your ${platform.name} brand presence with Rybbit`}
+        ctaDescription={`Track how your brand performs on ${platform.name}. Measure visibility, engagement, and growth with powerful analytics.`}
+        ctaEventLocation={`${platform.id}_logo_generator_cta`}
         structuredData={structuredData}
       />
     );
