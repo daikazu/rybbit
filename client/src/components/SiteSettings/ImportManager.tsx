@@ -265,26 +265,6 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
             </Alert>
           )}
 
-          {/* Success Message */}
-          {createImportMutation.isSuccess && (
-            <Alert className="border-green-200 bg-green-50">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription>File uploaded successfully and is being processed.</AlertDescription>
-              </div>
-            </Alert>
-          )}
-
-          {/* Delete Success Message */}
-          {deleteMutation.isSuccess && (
-            <Alert className="border-green-200 bg-green-50">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription>Import deleted successfully.</AlertDescription>
-              </div>
-            </Alert>
-          )}
-
           {/* Delete Error Message */}
           {deleteMutation.isError && (
             <Alert variant="destructive">
