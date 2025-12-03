@@ -47,7 +47,7 @@ export function OverridePlan() {
             {formatPlanName(subscription.planName)} Plan
           </CardTitle>
           <CardDescription>
-            You have a custom plan with up to {subscription?.eventLimit.toLocaleString()} events per month.
+            You have a custom plan with up to {subscription?.eventLimit.toLocaleString()} pageviews per month.
           </CardDescription>
         </CardHeader>
         <CardContent>

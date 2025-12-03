@@ -55,9 +55,10 @@ export function PageSpeedForm() {
 
     // Bounce rate calculation (assume current is 50% baseline)
     const currentBounceRate = 50;
-    const newBounceRate = timeDifference < 0
-      ? Math.max(currentBounceRate + bounceRateIncrease, 0)
-      : Math.min(currentBounceRate + bounceRateIncrease, 100);
+    const newBounceRate =
+      timeDifference < 0
+        ? Math.max(currentBounceRate + bounceRateIncrease, 0)
+        : Math.min(currentBounceRate + bounceRateIncrease, 100);
 
     return {
       conversionImpact: conversionImpact * 100,
@@ -69,7 +70,7 @@ export function PageSpeedForm() {
       bounceRateChange: bounceRateIncrease,
       currentBounceRate,
       newBounceRate,
-      timeDifference
+      timeDifference,
     };
   };
 
@@ -102,9 +103,13 @@ export function PageSpeedForm() {
                 placeholder="4.5"
                 className="w-full pl-4 pr-20 py-3 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">seconds</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">
+                seconds
+              </span>
             </div>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Your current page load time (check with PageSpeed Insights)</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              Your current page load time (check with PageSpeed Insights)
+            </p>
           </div>
 
           {/* Target Load Time */}
@@ -121,9 +126,13 @@ export function PageSpeedForm() {
                 placeholder="2.0"
                 className="w-full pl-4 pr-20 py-3 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">seconds</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">
+                seconds
+              </span>
             </div>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Your target load time (recommended: under 3 seconds)</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              Your target load time (recommended: under 3 seconds)
+            </p>
           </div>
 
           {/* Monthly Visitors */}
@@ -155,7 +164,9 @@ export function PageSpeedForm() {
                 placeholder="2.5"
                 className="w-full pl-4 pr-10 py-3 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">%</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">
+                %
+              </span>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Your current conversion rate</p>
           </div>
@@ -186,17 +197,22 @@ export function PageSpeedForm() {
                 <label className="block text-sm font-medium text-neutral-900 dark:text-white mb-2">
                   {metrics.monthlyImpact >= 0 ? "Monthly Revenue Gain" : "Monthly Revenue Loss"}
                 </label>
-                <div className={`px-4 py-6 border rounded-lg text-center ${
-                  metrics.monthlyImpact >= 0
-                    ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800"
-                    : "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800"
-                }`}>
-                  <div className={`text-4xl font-bold ${
+                <div
+                  className={`px-4 py-6 border rounded-lg text-center ${
                     metrics.monthlyImpact >= 0
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-red-600 dark:text-red-400"
-                  }`}>
-                    {metrics.monthlyImpact >= 0 ? "+" : "-"}${Math.abs(metrics.monthlyImpact).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800"
+                      : "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800"
+                  }`}
+                >
+                  <div
+                    className={`text-4xl font-bold ${
+                      metrics.monthlyImpact >= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {metrics.monthlyImpact >= 0 ? "+" : "-"}$
+                    {Math.abs(metrics.monthlyImpact).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
                   <div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">per month</div>
                 </div>
@@ -207,17 +223,22 @@ export function PageSpeedForm() {
                   <label className="block text-sm font-medium text-neutral-900 dark:text-white mb-2">
                     Annual Impact
                   </label>
-                  <div className={`px-4 py-4 border rounded-lg text-center ${
-                    metrics.annualImpact >= 0
-                      ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800"
-                      : "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800"
-                  }`}>
-                    <div className={`text-2xl font-bold ${
+                  <div
+                    className={`px-4 py-4 border rounded-lg text-center ${
                       metrics.annualImpact >= 0
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}>
-                      {metrics.annualImpact >= 0 ? "+" : "-"}${Math.abs(metrics.annualImpact).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800"
+                        : "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800"
+                    }`}
+                  >
+                    <div
+                      className={`text-2xl font-bold ${
+                        metrics.annualImpact >= 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {metrics.annualImpact >= 0 ? "+" : "-"}$
+                      {Math.abs(metrics.annualImpact).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
                   </div>
                 </div>
@@ -228,7 +249,8 @@ export function PageSpeedForm() {
                   </label>
                   <div className="px-4 py-4 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-center">
                     <div className="text-2xl font-bold text-neutral-900 dark:text-white">
-                      {metrics.conversionImpact >= 0 ? "+" : ""}{metrics.conversionImpact.toFixed(1)}%
+                      {metrics.conversionImpact >= 0 ? "+" : ""}
+                      {metrics.conversionImpact.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -250,22 +272,36 @@ export function PageSpeedForm() {
                   </label>
                   <div className="px-4 py-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-800 rounded-lg text-center">
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {metrics.timeDifference > 0 ? "+" : ""}{metrics.bounceRateChange.toFixed(1)}%
+                      {metrics.timeDifference > 0 ? "+" : ""}
+                      {metrics.bounceRateChange.toFixed(1)}%
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className={`p-4 rounded-lg border ${
-                metrics.monthlyImpact >= 0
-                  ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200"
-                  : "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900 text-orange-900 dark:text-orange-200"
-              }`}>
+              <div
+                className={`p-4 rounded-lg border ${
+                  metrics.monthlyImpact >= 0
+                    ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200"
+                    : "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900 text-orange-900 dark:text-orange-200"
+                }`}
+              >
                 <h3 className="font-semibold mb-2">Impact Summary:</h3>
                 <ul className="text-sm space-y-1">
-                  <li>Improving load time from <strong>{currentLoadTime}s</strong> to <strong>{targetLoadTime}s</strong></li>
-                  <li>Conversion rate changes from <strong>{parseFloat(conversionRate).toFixed(2)}%</strong> to <strong>{metrics.newConversionRate.toFixed(2)}%</strong></li>
-                  <li>Potential revenue impact: <strong>${Math.abs(metrics.monthlyImpact).toLocaleString(undefined, { maximumFractionDigits: 0 })}/month</strong> ({metrics.monthlyImpact >= 0 ? "gain" : "loss"})</li>
+                  <li>
+                    Improving load time from <strong>{currentLoadTime}s</strong> to <strong>{targetLoadTime}s</strong>
+                  </li>
+                  <li>
+                    Conversion rate changes from <strong>{parseFloat(conversionRate).toFixed(2)}%</strong> to{" "}
+                    <strong>{metrics.newConversionRate.toFixed(2)}%</strong>
+                  </li>
+                  <li>
+                    Potential revenue impact:{" "}
+                    <strong>
+                      ${Math.abs(metrics.monthlyImpact).toLocaleString(undefined, { maximumFractionDigits: 0 })}/month
+                    </strong>{" "}
+                    ({metrics.monthlyImpact >= 0 ? "gain" : "loss"})
+                  </li>
                   <li>Based on industry research: 7% conversion impact per second of load time</li>
                 </ul>
               </div>
@@ -294,7 +330,9 @@ export function PageSpeedForm() {
                 How much does page speed really matter?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-neutral-700 dark:text-neutral-300">
-                Studies show that for every 1 second delay in page load time, conversions decrease by approximately 7%, bounce rate increases by 7%, and customer satisfaction drops by 16%. A 2-second delay can result in abandonment rates up to 87% for e-commerce sites. This makes page speed a critical business metric.
+                Studies show that for every 1 second delay in page load time, conversions decrease by approximately 7%,
+                bounce rate increases by 7%, and customer satisfaction drops by 16%. A 2-second delay can result in
+                abandonment rates up to 87% for e-commerce sites. This makes page speed a critical business metric.
               </AccordionContent>
             </AccordionItem>
 
@@ -303,7 +341,10 @@ export function PageSpeedForm() {
                 What are Google Core Web Vitals and why are they important?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-neutral-700 dark:text-neutral-300">
-                Google Core Web Vitals are three key metrics that measure user experience: Largest Contentful Paint (LCP, visual loading speed), First Input Delay (FID, responsiveness), and Cumulative Layout Shift (CLS, visual stability). Google uses these metrics as ranking factors in search results, making them essential for SEO. Meeting these thresholds directly impacts your site's visibility and traffic.
+                Google Core Web Vitals are three key metrics that measure user experience: Largest Contentful Paint
+                (LCP, visual loading speed), First Input Delay (FID, responsiveness), and Cumulative Layout Shift (CLS,
+                visual stability). Google uses these metrics as ranking factors in search results, making them essential
+                for SEO. Meeting these thresholds directly impacts your site's visibility and traffic.
               </AccordionContent>
             </AccordionItem>
 
@@ -312,7 +353,9 @@ export function PageSpeedForm() {
                 What's a good page load time?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-neutral-700 dark:text-neutral-300">
-                Google recommends pages load in under 3 seconds on mobile. However, the faster the better—pages that load in under 1 second see significantly higher engagement. Amazon found that every 100ms improvement in load time increased revenue by 1%. Most successful e-commerce sites target between 1-2 seconds.
+                Google recommends pages load in under 3 seconds on mobile. However, the faster the better—pages that
+                load in under 1 second see significantly higher engagement. Amazon found that every 100ms improvement in
+                load time increased revenue by 1%. Most successful e-commerce sites target between 1-2 seconds.
               </AccordionContent>
             </AccordionItem>
 
@@ -321,7 +364,10 @@ export function PageSpeedForm() {
                 What are the best ways to improve page speed?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-neutral-700 dark:text-neutral-300">
-                Key improvements include: optimizing images (compress and use modern formats like WebP), minifying CSS/JS files, enabling browser caching, using a Content Delivery Network (CDN), reducing server response time, eliminating render-blocking resources, lazy-loading below-the-fold content, and choosing lightweight analytics tools like{" "}
+                Key improvements include: optimizing images (compress and use modern formats like WebP), minifying
+                CSS/JS files, enabling browser caching, using a Content Delivery Network (CDN), reducing server response
+                time, eliminating render-blocking resources, lazy-loading below-the-fold content, and choosing
+                lightweight analytics tools like{" "}
                 <Link href="https://app.rybbit.io" className="text-emerald-600 dark:text-emerald-400 hover:underline">
                   Rybbit
                 </Link>{" "}
@@ -334,7 +380,11 @@ export function PageSpeedForm() {
                 How can analytics tools affect my page speed?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-neutral-700 dark:text-neutral-300">
-                Many analytics tools can significantly impact page performance by loading large scripts synchronously and making blocking network requests. This reduces your page's speed and negatively affects user experience. Tools like Rybbit are designed to minimize this impact with lightweight asynchronous loading (3KB script, loaded after page interactive), ensuring you get the insights you need without compromising performance.
+                Many analytics tools can significantly impact page performance by loading large scripts synchronously
+                and making blocking network requests. This reduces your page's speed and negatively affects user
+                experience. Tools like Rybbit are designed to minimize this impact with lightweight asynchronous loading
+                (3KB script, loaded after page interactive), ensuring you get the insights you need without compromising
+                performance.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -348,7 +398,8 @@ export function PageSpeedForm() {
             Lightning-fast analytics that won't slow you down
           </h2>
           <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-8 max-w-2xl mx-auto">
-            Rybbit's tiny 3KB script loads asynchronously and won't impact your page speed. Get started for free with up to {DEFAULT_EVENT_LIMIT.toLocaleString()} events per month.
+            Rybbit's tiny 3KB script loads asynchronously and won't impact your page speed. Get started for free with up
+            to {DEFAULT_EVENT_LIMIT.toLocaleString()} pageviews per month.
           </p>
           <TrackedButton
             href="https://app.rybbit.io/signup"

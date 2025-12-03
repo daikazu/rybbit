@@ -103,9 +103,7 @@ export function SEOTitleForm() {
               disabled={isLoading}
               className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
             />
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Comma-separated keywords to include
-            </p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Comma-separated keywords to include</p>
           </div>
 
           {error && (
@@ -157,17 +155,16 @@ export function SEOTitleForm() {
                     </button>
                   </div>
                   <div className="flex items-center gap-4 text-xs">
-                    <span className={`font-medium ${getLengthColor(option.length)}`}>
-                      {option.length} characters
-                    </span>
-                    
+                    <span className={`font-medium ${getLengthColor(option.length)}`}>{option.length} characters</span>
+
                     <span className="text-neutral-600 dark:text-neutral-400">{option.approach}</span>
                   </div>
                 </div>
               ))}
               <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg">
                 <p className="text-sm text-blue-900 dark:text-blue-200">
-                  <strong>Tip:</strong> Optimal title length is 50-60 characters. Longer titles may be truncated in search results.
+                  <strong>Tip:</strong> Optimal title length is 50-60 characters. Longer titles may be truncated in
+                  search results.
                 </p>
               </div>
             </div>
@@ -182,7 +179,8 @@ export function SEOTitleForm() {
             Track your SEO performance with Rybbit
           </h2>
           <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-8 max-w-2xl mx-auto">
-            See which pages drive organic traffic and optimize your titles based on real data. Get started for free with up to {DEFAULT_EVENT_LIMIT.toLocaleString()} events per month.
+            See which pages drive organic traffic and optimize your titles based on real data. Get started for free with
+            up to {DEFAULT_EVENT_LIMIT.toLocaleString()} pageviews per month.
           </p>
           <TrackedButton
             href="https://app.rybbit.io/signup"

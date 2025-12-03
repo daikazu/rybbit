@@ -16,7 +16,7 @@ const COMPARISON_FEATURES = [
     category: "Usage",
     features: [
       {
-        name: "Monthly events",
+        name: "Monthly pageviews",
         free: DEFAULT_EVENT_LIMIT.toLocaleString(),
         standard: "100K - 20M+",
         pro: "100K - 20M+",

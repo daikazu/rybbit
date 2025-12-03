@@ -529,15 +529,6 @@ export default function HomePage() {
                     for either personal or business use.
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-9" className="border-t border-neutral-300/50 dark:border-neutral-800/50">
-                  <AccordionTrigger className="px-6 py-4 text-base md:text-lg font-medium hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
-                    What counts as an event?
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4 text-neutral-700 dark:text-neutral-300">
-                    An event is either a pageview or a custom event that you create on your website. Pageviews are
-                    tracked automatically, while custom events can be defined to track specific user interactions.
-                  </AccordionContent>
-                </AccordionItem>
               </Accordion>
             </div>
           </div>
