@@ -69,6 +69,7 @@ export const InputWithSuggestions = React.forwardRef<HTMLInputElement, InputWith
           value={value}
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
+          autoComplete="off"
           className={className}
           {...props}
         />

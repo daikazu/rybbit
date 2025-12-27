@@ -218,7 +218,7 @@ export default function GoalFormModal({ siteId, goal, trigger, isCloneMode = fal
                 <FormItem>
                   <FormLabel>Goal Name (optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Sign Up Completion" {...field} />
+                    <Input placeholder="e.g., Sign Up Completion" autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
