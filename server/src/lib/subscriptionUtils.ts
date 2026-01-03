@@ -5,6 +5,7 @@ import { db } from "../db/postgres/postgres.js";
 import { organization } from "../db/postgres/schema.js";
 import { APPSUMO_TIER_LIMITS, DEFAULT_EVENT_LIMIT, getStripePrices, StripePlan } from "./const.js";
 import { stripe } from "./stripe.js";
+import { logger } from "./logger/logger.js";
 
 export interface AppSumoSubscriptionInfo {
   source: "appsumo";
@@ -53,7 +54,11 @@ export interface OverrideSubscriptionInfo {
   isPro: boolean;
 }
 
-export type SubscriptionInfo = AppSumoSubscriptionInfo | StripeSubscriptionInfo | FreeSubscriptionInfo | OverrideSubscriptionInfo;
+export type SubscriptionInfo =
+  | AppSumoSubscriptionInfo
+  | StripeSubscriptionInfo
+  | FreeSubscriptionInfo
+  | OverrideSubscriptionInfo;
 
 /**
  * Gets the first day of the current month in YYYY-MM-DD format
@@ -162,9 +167,7 @@ export async function getOverrideSubscription(organizationId: string): Promise<O
  * Gets Stripe subscription info for an organization
  * @returns Stripe subscription info or null if no active subscription found
  */
-export async function getStripeSubscription(
-  stripeCustomerId: string | null
-): Promise<StripeSubscriptionInfo | null> {
+export async function getStripeSubscription(stripeCustomerId: string | null): Promise<StripeSubscriptionInfo | null> {
   if (!stripeCustomerId) {
     return null;
   }
@@ -218,9 +221,7 @@ export async function getStripeSubscription(
 
     // If subscription started within current month, use that date; otherwise use month start
     const periodStart =
-      subscriptionStartDate >= currentMonthStart
-        ? subscriptionStartDate.toISODate() as string
-        : getStartOfMonth();
+      subscriptionStartDate >= currentMonthStart ? (subscriptionStartDate.toISODate() as string) : getStartOfMonth();
 
     return {
       source: "stripe",
@@ -266,7 +267,7 @@ export async function getBestSubscription(
   // If we have both, return the one with higher event limit
   if (appsumoSub && stripeSub) {
     const bestSub = appsumoSub.eventLimit >= stripeSub.eventLimit ? appsumoSub : stripeSub;
-    console.log(
+    logger.info(
       `Organization has both AppSumo (${appsumoSub.eventLimit} events) and Stripe (${stripeSub.eventLimit} events). Using ${bestSub.source} with ${bestSub.eventLimit} events.`
     );
     return bestSub;
