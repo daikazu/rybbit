@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { authClient } from "../lib/auth";
-import { useUserOrganizations } from "../api/admin/hooks/useOrganizations";
-import { useTrack } from "../hooks/useTrack";
+import { authClient } from "../../lib/auth";
+import { useUserOrganizations } from "../../api/admin/hooks/useOrganizations";
+import { useTrack } from "../../hooks/useTrack";
 
 function OrganizationInitializerInner() {
   const { data: organizations } = useUserOrganizations();

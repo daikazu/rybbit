@@ -346,10 +346,10 @@ export default function FeaturesPage() {
                 Live demo
               </TrackedButton>
             </div>
-            <p className="text-neutral-500 dark:text-neutral-400 text-sm flex items-center justify-center gap-2 mt-6">
+            {/* <p className="text-neutral-500 dark:text-neutral-400 text-sm flex items-center justify-center gap-2 mt-6">
               <CheckCircle className="w-4 h-4" />
               First {DEFAULT_EVENT_LIMIT.toLocaleString()} pageviews/m free • No credit card required
-            </p>
+            </p> */}
           </div>
         </div>
       </section>
@@ -513,10 +513,10 @@ export default function FeaturesPage() {
               </button>
             </Link>
           </div>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm flex items-center justify-center gap-2 mt-8">
+          {/* <p className="text-neutral-500 dark:text-neutral-400 text-sm flex items-center justify-center gap-2 mt-8">
             <CheckCircle className="w-4 h-4" />
             No credit card required • Cancel anytime • {DEFAULT_EVENT_LIMIT.toLocaleString()} pageviews/month free
-          </p>
+          </p> */}
         </div>
       </section>
     </div>

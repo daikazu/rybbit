@@ -205,9 +205,8 @@ export function PricingSection() {
         </div>
 
         {/* Pricing cards layout */}
-        <div className="grid min-[1100px]:grid-cols-4 min-[600px]:grid-cols-2 min-[400px]:grid-cols-1 gap-6 max-w-6xl mx-auto justify-center items-stretch">
-          {/* Free Plan Card */}
-          <PricingCard
+        <div className="grid min-[1100px]:grid-cols-3 min-[400px]:grid-cols-1 gap-6 max-w-4xl mx-auto justify-center items-stretch">
+          {/* <PricingCard
             title="Free"
             description="Perfect for hobby projects"
             priceDisplay={
@@ -222,9 +221,7 @@ export function PricingSection() {
             features={FREE_FEATURES}
             variant="free"
             eventLocation="free"
-          />
-
-          {/* Standard Plan Card */}
+          /> */}
           <PricingCard
             title="Standard"
             description="Everything you need to get started as a small business"
@@ -245,8 +242,6 @@ export function PricingSection() {
             features={STANDARD_FEATURES}
             eventLocation={standardPrices.custom ? undefined : "standard"}
           />
-
-          {/* Pro Plan Card */}
           <PricingCard
             title="Pro"
             description="Advanced features for professional teams"

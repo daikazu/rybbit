@@ -178,10 +178,10 @@ export default function HomePage() {
               Live demo
             </TrackedButton>
           </div>
-          <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm flex items-center justify-center gap-2 mt-6">
+          {/* <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm flex items-center justify-center gap-2 mt-6">
             <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
             First {DEFAULT_EVENT_LIMIT.toLocaleString()} pageviews/m are free. No credit card required.
-          </p>
+          </p> */}
         </div>
         <div className="relative w-full max-w-[1300px] mb-10 px-4">
           {/* Background gradients - overlapping circles for organic feel */}
@@ -566,9 +566,9 @@ export default function HomePage() {
               <h2 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6">
                 It&apos;s time to switch to analytics that&apos;s made for you
               </h2>
-              <p className="text-base md:text-xl text-neutral-600 dark:text-neutral-300 mb-6 md:mb-10 max-w-3xl mx-auto font-light">
+              {/* <p className="text-base md:text-xl text-neutral-600 dark:text-neutral-300 mb-6 md:mb-10 max-w-3xl mx-auto font-light">
                 The first {DEFAULT_EVENT_LIMIT.toLocaleString()} pageviews a month are free
-              </p>
+              </p> */}
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 mb-6 md:mb-8 w-full sm:w-auto">
                 <TrackedButton
@@ -581,10 +581,10 @@ export default function HomePage() {
                 </TrackedButton>
               </div>
 
-              <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm flex items-center justify-center gap-2">
+              {/* <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm flex items-center justify-center gap-2">
                 <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
                 No credit card required
-              </p>
+              </p> */}
             </div>
           </div>
         </section>
