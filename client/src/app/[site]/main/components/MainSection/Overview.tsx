@@ -105,7 +105,7 @@ const Stat = ({
       onMouseLeave={() => setIsHovering(false)}
     >
       <div className="flex flex-col px-3 py-2">
-        <div className="text-sm font-medium text-muted-foreground">{title}</div>
+        <div className="text-xs font-medium text-muted-foreground">{title}</div>
         <div className="text-2xl font-medium flex gap-2 items-center justify-between">
           {isLoading ? (
             <>
