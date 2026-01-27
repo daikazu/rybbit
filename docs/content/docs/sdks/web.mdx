@@ -59,10 +59,10 @@ await rybbit.init({
 
 #### Required Options
 
-| Option          | Type               | Description                                                                          |
-| :-------------- | :----------------- | :----------------------------------------------------------------------------------- |
-| `analyticsHost` | `string`           | URL of your Rybbit analytics instance (e.g., `https://rybbit.yourdomain.com/api`). |
-| `siteId`        | `string \| number` | The Site ID for your website obtained from your Rybbit instance.       |
+| Option          | Type     | Description                                                                          |
+| :-------------- | :------- | :----------------------------------------------------------------------------------- |
+| `analyticsHost` | `string` | URL of your Rybbit analytics instance (e.g., `https://rybbit.yourdomain.com/api`). |
+| `siteId`        | `string` | The Site ID for your website obtained from your Rybbit instance.       |
 
 #### Local Configuration Options
 
@@ -70,7 +70,7 @@ These options are configured in your code and control SDK behavior locally:
 
 | Option                 | Type     | Default | Description                                                                                                                                                             |
 | :--------------------- | :------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `debounce`             | `number` | `500`   | Debounce time in milliseconds for tracking pageviews after route changes. Set to `0` to disable debouncing (track immediately).                                         |
+| `debounceDuration`     | `number` | `500`   | Debounce time in milliseconds for tracking pageviews after route changes. Set to `0` to disable debouncing (track immediately).                                         |
 | `skipPatterns`         | `string[]` | `[]`    | Array of path patterns. Pageviews whose path matches any pattern will **not** be tracked. See [Path Matching](#path-matching).                                          |
 | `maskPatterns`         | `string[]` | `[]`    | Array of path patterns. For matching pageview paths, the original path will be **replaced** by the pattern itself in tracked data. See [Path Matching](#path-matching). |
 | `debug`                | `boolean` | `false` | Enable detailed logging to the browser console.                                                                                                                         |
@@ -205,7 +205,7 @@ Outbound links (links to external domains) are tracked automatically by default 
 ### Syntax
 
 ```typescript
-rybbit.outbound(url: string, text?: string, target?: string);
+rybbit.trackOutbound(url: string, text?: string, target?: string);
 ```
 
 ### Parameters
@@ -225,7 +225,7 @@ rybbit.outbound(url: string, text?: string, target?: string);
 // Manually track an outbound click triggered by a button
 document.getElementById("external-service-button")?.addEventListener("click", () => {
   let url = "https://external-service.com";
-  rybbit.outbound(url, "Visit External Service", "_blank");
+  rybbit.trackOutbound(url, "Visit External Service", "_blank");
   // Optionally navigate after tracking
   window.open(url, "_blank");
 });
@@ -248,7 +248,7 @@ You can manually capture errors with additional context:
 #### Syntax
 
 ```typescript
-rybbit.captureError(error: Error | ErrorEvent, context?: TrackProperties);
+rybbit.error(error: Error | ErrorEvent, context?: TrackProperties);
 ```
 
 #### Parameters
@@ -263,7 +263,7 @@ try {
   // Some risky operation
   processPayment(orderData);
 } catch (error) {
-  rybbit.captureError(error, {
+  rybbit.error(error, {
     component: "checkout",
     orderId: "order-123",
     userId: currentUser.id
@@ -278,7 +278,7 @@ async function fetchUserData(userId) {
     const response = await fetch(`/api/users/${userId}`);
     return await response.json();
   } catch (error) {
-    rybbit.captureError(error, {
+    rybbit.error(error, {
       endpoint: "/api/users",
       userId: userId
     });
@@ -288,7 +288,7 @@ async function fetchUserData(userId) {
 ```
 
 <Callout type="info">
-Manual error capture only works when error tracking is enabled in your dashboard settings. If it's disabled, calling `captureError()` will log a warning.
+Manual error capture only works when error tracking is enabled in your dashboard settings. If it's disabled, calling `error()` will log a warning.
 </Callout>
 
 ## Session Replay
@@ -341,23 +341,69 @@ await rybbit.init({
 });
 ```
 
+#### Privacy Config Options
+
+| Option              | Type                  | Description                                                     |
+| :------------------ | :-------------------- | :-------------------------------------------------------------- |
+| `maskAllInputs`     | `boolean`             | Mask all input values (default: `true`)                         |
+| `maskTextSelectors` | `string[]`            | CSS selectors for elements whose text should be masked          |
+| `blockClass`        | `string`              | CSS class name to block elements from recording                 |
+| `blockSelector`     | `string`              | CSS selector to block elements from recording                   |
+| `ignoreClass`       | `string`              | CSS class name to ignore elements from recording                |
+| `ignoreSelector`    | `string`              | CSS selector to ignore elements from recording                  |
+| `maskTextClass`     | `string`              | CSS class name to mask text content                             |
+| `collectFonts`      | `boolean`             | Whether to collect font information                             |
+| `slimDOMOptions`    | `object \| boolean`   | Options to reduce DOM snapshot size                             |
+| `batchSize`         | `number`              | Number of events to batch before sending                        |
+| `batchInterval`     | `number`              | Interval in milliseconds between batched sends                  |
+
 ## User Identification
 
-You can associate tracking events with a specific user ID. The ID is persisted in `localStorage` and will be attached to all subsequent tracking events for that user.
+You can associate tracking events with a specific user ID and optional traits. The ID is persisted in `localStorage` and will be attached to all subsequent tracking events for that user.
 
 ### `identify`
 
-Assigns a user ID.
+Assigns a user ID with optional traits.
 
 ```typescript
-rybbit.identify(userId: string);
+rybbit.identify(userId: string, traits?: Record<string, unknown>);
 ```
+
+**Parameters:**
+
+- **`userId`** (`string`, Required): The user ID to associate with tracking events.
+- **`traits`** (`object`, Optional): An object containing user attributes/properties.
 
 **Example:**
 
 ```javascript
 // After a user logs in
 rybbit.identify("user-xzy-123");
+
+// With traits
+rybbit.identify("user-xzy-123", {
+  email: "user@example.com",
+  plan: "premium",
+  signupDate: "2024-01-15"
+});
+```
+
+### `setTraits`
+
+Updates traits for the currently identified user without changing the user ID.
+
+```typescript
+rybbit.setTraits(traits: Record<string, unknown>);
+```
+
+**Example:**
+
+```javascript
+// Update user traits after they upgrade
+rybbit.setTraits({
+  plan: "enterprise",
+  upgradeDate: "2024-03-01"
+});
 ```
 
 ### `clearUserId`
